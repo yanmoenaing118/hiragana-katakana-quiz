@@ -1,583 +1,634 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Katakana & Hiragana Romaji Quiz</title>
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="An interactive quiz to learn and practice Hiragana and Katakana, with charts for reference.">
+    <meta name="keywords" content="Hiragana, Katakana, Romaji, Japanese, language, quiz, learn, practice, chart">
+    <meta name="author" content="AI Assistant">
+    <link rel="canonical" href="https://your-app-url.com/kana-quiz"> <!-- Replace with your actual URL -->
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://your-app-url.com/kana-quiz"> <!-- Replace with your actual URL -->
+    <meta property="og:title" content="Katakana & Hiragana Romaji Quiz">
+    <meta property="og:description" content="An interactive quiz to learn and practice Hiragana and Katakana, with charts for reference.">
+    <meta property="og:image" content="https://placehold.co/1200x630/cccccc/ffffff?text=Kana+Quiz"> <!-- Replace with a relevant image -->
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://your-app-url.com/kana-quiz"> <!-- Replace with your actual URL -->
+    <meta property="twitter:title" content="Katakana & Hiragana Romaji Quiz">
+    <meta property="twitter:description" content="An interactive quiz to learn and practice Hiragana and Katakana, with charts for reference.">
+    <meta property="twitter:image" content="https://placehold.co/1200x630/cccccc/ffffff?text=Kana+Quiz"> <!-- Replace with a relevant image -->
+    <!-- End SEO Meta Tags -->
+
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-      /* Custom CSS for screen shake animation */
-      @keyframes shake {
-        0% {
-          transform: translateX(0);
+        /* Custom CSS for screen shake animation */
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
         }
-        25% {
-          transform: translateX(-5px);
+        .shake-screen {
+            animation: shake 0.3s cubic-bezier(.36,.07,.19,.97) both;
+            transform: translate3d(0, 0, 0);
+            backface-visibility: hidden;
+            perspective: 1000px;
         }
-        50% {
-          transform: translateX(5px);
+
+        /* Ensure smooth font rendering for Japanese characters */
+        body {
+            font-family: 'Inter', 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
-        75% {
-          transform: translateX(-5px);
+
+        /* Message box styling */
+        .message-box {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #4CAF50; /* Green for success */
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+            z-index: 1000;
         }
-        100% {
-          transform: translateX(0);
+
+        .message-box.show {
+            opacity: 1;
+            visibility: visible;
         }
-      }
-      .shake-screen {
-        animation: shake 0.3s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
-        transform: translate3d(0, 0, 0);
-        backface-visibility: hidden;
-        perspective: 1000px;
-      }
 
-      /* Ensure smooth font rendering for Japanese characters */
-      body {
-        font-family: 'Inter', 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-      }
+        .message-box.error {
+            background-color: #f44336; /* Red for error */
+        }
 
-      /* Message box styling */
-      .message-box {
-        position: fixed;
-        top: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        background-color: #4caf50; /* Green for success */
-        color: white;
-        padding: 10px 20px;
-        border-radius: 8px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        opacity: 0;
-        visibility: hidden;
-        transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
-        z-index: 1000;
-      }
+        /* Chart Modal Styles */
+        .chart-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black background */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 20; /* Above other content */
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+        }
 
-      .message-box.show {
-        opacity: 1;
-        visibility: visible;
-      }
+        .chart-modal-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
 
-      .message-box.error {
-        background-color: #f44336; /* Red for error */
-      }
+        .chart-modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 0.75rem; /* rounded-xl */
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); /* shadow-2xl */
+            position: relative;
+            max-width: 95%; /* Increased max-width for better chart display */
+            max-height: 90vh; /* Limit height for scrollability */
+            overflow-y: auto; /* Enable scrolling for large charts */
+            transform: scale(0.95); /* Initial smaller scale for animation */
+            transition: transform 0.3s ease-in-out;
+        }
 
-      /* Chart Modal Styles */
-      .chart-modal-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(
-          0,
-          0,
-          0,
-          0.5
-        ); /* Semi-transparent black background */
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 20; /* Above other content */
-        opacity: 0;
-        visibility: hidden;
-        transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
-      }
+        .chart-modal-overlay.show .chart-modal-content {
+            transform: scale(1); /* Scale to normal when shown */
+        }
 
-      .chart-modal-overlay.show {
-        opacity: 1;
-        visibility: visible;
-      }
+        /* Custom scrollbar hiding for webkit browsers */
+        .chart-modal-content::-webkit-scrollbar {
+            width: 0px;  /* Remove scrollbar space */
+            background: transparent;  /* Optional: just make scrollbar invisible */
+        }
+        .chart-modal-content::-webkit-scrollbar-thumb {
+            background: transparent; /* Optional: hide the thumb */
+        }
 
-      .chart-modal-content {
-        background-color: white;
-        padding: 2rem;
-        border-radius: 0.75rem; /* rounded-xl */
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); /* shadow-2xl */
-        position: relative;
-        max-width: 90%;
-        max-height: 90vh; /* Limit height for scrollability */
-        overflow-y: auto; /* Enable scrolling for large charts */
-        transform: scale(0.95); /* Initial smaller scale for animation */
-        transition: transform 0.3s ease-in-out;
-      }
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr)); /* 5 columns for 'a', 'i', 'u', 'e', 'o' */
+            gap: 0.75rem; /* Slightly reduced gap for more cells */
+        }
 
-      .chart-modal-overlay.show .chart-modal-content {
-        transform: scale(1); /* Scale to normal when shown */
-      }
+        .chart-cell {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 0.5rem; /* Reduced padding */
+            border-radius: 0.375rem; /* rounded-md */
+            background-color: #f9fafb; /* bg-gray-50 */
+            border: 1px solid #e5e7eb; /* border-gray-200 */
+        }
 
-      .chart-grid {
-        display: grid;
-        grid-template-columns: repeat(5, minmax(0, 1fr)); /* 5 columns */
-        gap: 1rem; /* Space between cells */
-      }
+        .chart-kana {
+            font-size: 2rem; /* Adjusted font size for better fit */
+            font-weight: bold;
+            color: #1f2937; /* text-gray-800 */
+        }
 
-      .chart-cell {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 0.75rem;
-        border-radius: 0.375rem; /* rounded-md */
-        background-color: #f9fafb; /* bg-gray-50 */
-        border: 1px solid #e5e7eb; /* border-gray-200 */
-      }
+        .chart-romaji {
+            font-size: 0.75rem; /* text-xs */
+            color: #6b7280; /* text-gray-500 */
+            margin-top: 0.1rem; /* Reduced margin */
+        }
 
-      .chart-kana {
-        font-size: 2.5rem; /* Large kana character */
-        font-weight: bold;
-        color: #1f2937; /* text-gray-800 */
-      }
+        /* Empty cells in the chart */
+        .chart-cell.empty {
+            background-color: transparent;
+            border: none;
+        }
 
-      .chart-romaji {
-        font-size: 0.875rem; /* text-sm */
-        color: #6b7280; /* text-gray-500 */
-        margin-top: 0.25rem;
-      }
-
-      /* Close button for modal */
-      .modal-close-button {
-        position: absolute;
-        top: 0.75rem;
-        right: 0.75rem;
-        background: none;
-        border: none;
-        font-size: 1.5rem;
-        line-height: 1;
-        color: #6b7280; /* text-gray-500 */
-        cursor: pointer;
-        transition: color 0.2s ease-in-out;
-      }
-      .modal-close-button:hover {
-        color: #374151; /* text-gray-700 */
-      }
+        /* Close button for modal */
+        .modal-close-button {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            line-height: 1;
+            color: #6b7280; /* text-gray-500 */
+            cursor: pointer;
+            transition: color 0.2s ease-in-out;
+            z-index: 10; /* Ensure it's above chart content */
+        }
+        .modal-close-button:hover {
+            color: #374151; /* text-gray-700 */
+        }
     </style>
-  </head>
-  <body
-    class="bg-gray-100 flex flex-col items-center justify-center min-h-screen p-4"
-  >
-    <div
-      id="quiz-container"
-      class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md text-center mb-8"
-    >
-      <h1 class="text-3xl font-bold mb-6 text-gray-800">
-        Katakana & Hiragana Quiz
-      </h1>
+</head>
+<body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen p-4">
 
-      <!-- Display area for Japanese characters -->
-      <div
-        id="kana-display"
-        class="flex justify-center items-center space-x-6 mb-8"
-      >
-        <!-- Each character will be rendered here dynamically -->
-      </div>
+    <div id="quiz-container" class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md text-center mb-8">
+        <h1 class="text-3xl font-bold mb-6 text-gray-800">Katakana & Hiragana Quiz</h1>
 
-      <!-- Romaji input field -->
-      <input
-        type="text"
-        id="romaji-input"
-        class="w-full px-4 py-3 mb-6 border-2 border-gray-300 rounded-lg text-lg text-gray-700 placeholder-gray-400 focus:outline-none transition duration-200"
-        placeholder="Type Romaji here..."
-        autofocus
-      />
+        <!-- Display area for Japanese characters -->
+        <div id="kana-display" class="flex justify-center items-center space-x-6 mb-8">
+            <!-- Each character will be rendered here dynamically -->
+        </div>
 
-      <!-- Buttons container -->
-      <div class="flex flex-col space-y-4">
-        <!-- Check Answer button -->
-        <button
-          id="check-button"
-          class="bg-gradient-to-br from-green-400 to-green-600 text-white font-semibold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl transition duration-300 ease-in-out transform hover:scale-105 w-full border border-green-500 focus:outline-none"
-        >
-          Check Answer
-        </button>
+        <!-- Romaji input field -->
+        <input
+            type="text"
+            id="romaji-input"
+            class="w-full px-4 py-3 mb-6 border-2 border-gray-300 rounded-lg text-lg text-gray-700 placeholder-gray-400 focus:outline-none transition duration-200"
+            placeholder="Type Romaji here..."
+            autofocus
+        />
 
-        <!-- Show Answer button -->
-        <button
-          id="show-answer-button"
-          class="bg-gradient-to-br from-lime-300/80 to-lime-500/80 text-gray-800 font-semibold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition duration-300 ease-in-out transform hover:scale-105 w-full border border-lime-400/80 focus:outline-none"
-        >
-          Show Answer
-        </button>
-      </div>
+        <!-- Buttons container -->
+        <div class="flex flex-col space-y-4">
+            <!-- Check Answer button -->
+            <button
+                id="check-button"
+                class="bg-gradient-to-br from-green-400 to-green-600 text-white font-semibold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl transition duration-300 ease-in-out transform hover:scale-105 w-full border border-green-500 focus:outline-none"
+            >
+                Check Answer
+            </button>
 
-      <!-- Display area for correct answers -->
-      <div id="answer-display" class="mt-6 text-lg font-semibold text-gray-700">
-        <!-- Correct answers will be displayed here -->
-      </div>
+            <!-- Show Answer button -->
+            <button
+                id="show-answer-button"
+                class="bg-gradient-to-br from-lime-300/80 to-lime-500/80 text-gray-800 font-semibold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition duration-300 ease-in-out transform hover:scale-105 w-full border border-lime-400/80 focus:outline-none"
+            >
+                Show Answer
+            </button>
+        </div>
 
-      <!-- Message box for feedback -->
-      <div id="message-box" class="message-box"></div>
+        <!-- Display area for correct answers -->
+        <div id="answer-display" class="mt-6 text-lg font-semibold text-gray-700">
+            <!-- Correct answers will be displayed here -->
+        </div>
+
+        <!-- Message box for feedback -->
+        <div id="message-box" class="message-box"></div>
     </div>
 
     <!-- Chart Buttons outside the quiz box -->
     <div class="flex space-x-4 mt-8">
-      <button
-        id="show-hiragana-chart-button"
-        class="bg-gradient-to-br from-teal-400/80 to-teal-600/80 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition duration-300 ease-in-out transform hover:scale-105 border border-teal-500/80 focus:outline-none"
-      >
-        Show Hiragana Chart
-      </button>
-      <button
-        id="show-katakana-chart-button"
-        class="bg-gradient-to-br from-indigo-400/80 to-indigo-600/80 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition duration-300 ease-in-out transform hover:scale-105 border border-indigo-500/80 focus:outline-none"
-      >
-        Show Katakana Chart
-      </button>
+        <button
+            id="show-hiragana-chart-button"
+            class="bg-gradient-to-br from-teal-400/80 to-teal-600/80 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition duration-300 ease-in-out transform hover:scale-105 border border-teal-500/80 focus:outline-none"
+        >
+            Show Hiragana Chart
+        </button>
+        <button
+            id="show-katakana-chart-button"
+            class="bg-gradient-to-br from-indigo-400/80 to-indigo-600/80 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition duration-300 ease-in-out transform hover:scale-105 border border-indigo-500/80 focus:outline-none"
+        >
+            Show Katakana Chart
+        </button>
     </div>
 
     <!-- Chart Modal Structure -->
     <div id="chart-modal-overlay" class="chart-modal-overlay">
-      <div id="chart-modal-content" class="chart-modal-content">
-        <button id="close-chart-modal-button" class="modal-close-button">
-          &times;
-        </button>
-        <h2 id="chart-title" class="text-2xl font-bold mb-6 text-gray-800"></h2>
-        <div id="chart-grid" class="chart-grid">
-          <!-- Chart content will be dynamically loaded here -->
+        <div id="chart-modal-content" class="chart-modal-content">
+            <button id="close-chart-modal-button" class="modal-close-button">&times;</button>
+            <h2 id="chart-title" class="text-2xl font-bold mb-6 text-gray-800"></h2>
+            <div id="chart-grid" class="chart-grid">
+                <!-- Chart content will be dynamically loaded here -->
+            </div>
         </div>
-      </div>
     </div>
 
     <script>
-      // Array of Katakana and Hiragana characters with their Romaji equivalents
-      // Expanded to include more characters for a better chart display
-      const kanaData = [
-        // Hiragana
-        { kana: 'あ', romaji: 'a', type: 'hiragana' },
-        { kana: 'い', romaji: 'i', type: 'hiragana' },
-        { kana: 'う', romaji: 'u', type: 'hiragana' },
-        { kana: 'え', romaji: 'e', type: 'hiragana' },
-        { kana: 'お', romaji: 'o', type: 'hiragana' },
-        { kana: 'か', romaji: 'ka', type: 'hiragana' },
-        { kana: 'き', romaji: 'ki', type: 'hiragana' },
-        { kana: 'く', romaji: 'ku', type: 'hiragana' },
-        { kana: 'け', romaji: 'ke', type: 'hiragana' },
-        { kana: 'こ', romaji: 'ko', type: 'hiragana' },
-        { kana: 'さ', romaji: 'sa', type: 'hiragana' },
-        { kana: 'し', romaji: 'shi', type: 'hiragana' },
-        { kana: 'す', romaji: 'su', type: 'hiragana' },
-        { kana: 'せ', romaji: 'se', type: 'hiragana' },
-        { kana: 'そ', romaji: 'so', type: 'hiragana' },
-        { kana: 'た', romaji: 'ta', type: 'hiragana' },
-        { kana: 'ち', romaji: 'chi', type: 'hiragana' },
-        { kana: 'つ', romaji: 'tsu', type: 'hiragana' },
-        { kana: 'て', romaji: 'te', type: 'hiragana' },
-        { kana: 'と', romaji: 'to', type: 'hiragana' },
-        { kana: 'な', romaji: 'na', type: 'hiragana' },
-        { kana: 'に', romaji: 'ni', type: 'hiragana' },
-        { kana: 'ぬ', romaji: 'nu', type: 'hiragana' },
-        { kana: 'ね', romaji: 'ne', type: 'hiragana' },
-        { kana: 'の', romaji: 'no', type: 'hiragana' },
-        { kana: 'は', romaji: 'ha', type: 'hiragana' },
-        { kana: 'ひ', romaji: 'hi', type: 'hiragana' },
-        { kana: 'ふ', romaji: 'fu', type: 'hiragana' },
-        { kana: 'へ', romaji: 'he', type: 'hiragana' },
-        { kana: 'ほ', romaji: 'ho', type: 'hiragana' },
-        { kana: 'ま', romaji: 'ma', type: 'hiragana' },
-        { kana: 'み', romaji: 'mi', type: 'hiragana' },
-        { kana: 'む', romaji: 'mu', type: 'hiragana' },
-        { kana: 'め', romaji: 'me', type: 'hiragana' },
-        { kana: 'も', romaji: 'mo', type: 'hiragana' },
-        { kana: 'や', romaji: 'ya', type: 'hiragana' },
-        { kana: 'ゆ', romaji: 'yu', type: 'hiragana' },
-        { kana: 'よ', romaji: 'yo', type: 'hiragana' },
-        { kana: 'ら', romaji: 'ra', type: 'hiragana' },
-        { kana: 'り', romaji: 'ri', type: 'hiragana' },
-        { kana: 'る', romaji: 'ru', type: 'hiragana' },
-        { kana: 'れ', romaji: 're', type: 'hiragana' },
-        { kana: 'ろ', romaji: 'ro', type: 'hiragana' },
-        { kana: 'わ', romaji: 'wa', type: 'hiragana' },
-        { kana: 'を', romaji: 'wo', type: 'hiragana' },
-        { kana: 'ん', romaji: 'n', type: 'hiragana' },
+        // Full kana data including hiragana and katakana for Gojūon chart layout
+        // Each object has kana, romaji, and type.
+        const fullKanaData = [
+            // Hiragana
+            { kana: "あ", romaji: "a", type: "hiragana" }, { kana: "い", romaji: "i", type: "hiragana" },
+            { kana: "う", romaji: "u", type: "hiragana" }, { kana: "え", romaji: "e", type: "hiragana" },
+            { kana: "お", romaji: "o", type: "hiragana" },
+            { kana: "か", romaji: "ka", type: "hiragana" }, { kana: "き", romaji: "ki", type: "hiragana" },
+            { kana: "く", romaji: "ku", type: "hiragana" }, { kana: "け", romaji: "ke", type: "hiragana" },
+            { kana: "こ", romaji: "ko", type: "hiragana" },
+            { kana: "さ", romaji: "sa", type: "hiragana" }, { kana: "し", romaji: "shi", type: "hiragana" },
+            { kana: "す", romaji: "su", type: "hiragana" }, { kana: "せ", romaji: "se", type: "hiragana" },
+            { kana: "そ", romaji: "so", type: "hiragana" },
+            { kana: "た", romaji: "ta", type: "hiragana" }, { kana: "ち", romaji: "chi", type: "hiragana" },
+            { kana: "つ", romaji: "tsu", type: "hiragana" }, { kana: "て", romaji: "te", type: "hiragana" },
+            { kana: "と", romaji: "to", type: "hiragana" },
+            { kana: "な", romaji: "na", type: "hiragana" }, { kana: "に", romaji: "ni", type: "hiragana" },
+            { kana: "ぬ", romaji: "nu", type: "hiragana" }, { kana: "ね", romaji: "ne", type: "hiragana" },
+            { kana: "の", romaji: "no", type: "hiragana" },
+            { kana: "は", romaji: "ha", type: "hiragana" }, { kana: "ひ", romaji: "hi", type: "hiragana" },
+            { kana: "ふ", romaji: "fu", type: "hiragana" }, { kana: "へ", romaji: "he", type: "hiragana" },
+            { kana: "ほ", romaji: "ho", type: "hiragana" },
+            { kana: "ま", romaji: "ma", type: "hiragana" }, { kana: "み", romaji: "mi", type: "hiragana" },
+            { kana: "む", romaji: "mu", type: "hiragana" }, { kana: "め", romaji: "me", type: "hiragana" },
+            { kana: "も", romaji: "mo", type: "hiragana" },
+            { kana: "や", romaji: "ya", type: "hiragana" }, { kana: "ゆ", romaji: "yu", type: "hiragana" },
+            { kana: "よ", romaji: "yo", type: "hiragana" }, // Empty slots for "i" and "e" columns in "ya" row
+            { kana: "ら", romaji: "ra", type: "hiragana" }, { kana: "り", romaji: "ri", type: "hiragana" },
+            { kana: "る", romaji: "ru", type: "hiragana" }, { kana: "れ", romaji: "re", type: "hiragana" },
+            { kana: "ろ", romaji: "ro", type: "hiragana" },
+            { kana: "わ", romaji: "wa", type: "hiragana" }, { kana: "を", romaji: "wo", type: "hiragana" }, // Empty slots for "i", "u", "e" columns in "wa" row
+            { kana: "ん", romaji: "n", type: "hiragana" }, // Special character 'n'
+            // Add dakuten/handakuten and small characters if desired for a full chart
+            // Example:
+            // { kana: "が", romaji: "ga", type: "hiragana" }, { kana: "ぎ", romaji: "gi", type: "hiragana" }, { kana: "ぐ", romaji: "gu", type: "hiragana" }, { kana: "げ", romaji: "ge", type: "hiragana" }, { kana: "ご", romaji: "go", type: "hiragana" },
+            // { kana: "ぱ", romaji: "pa", type: "hiragana" }, { kana: "ぴ", romaji: "pi", type: "hiragana" }, { kana: "ぷ", romaji: "pu", type: "hiragana" }, { kana: "ぺ", romaji: "pe", type: "hiragana" }, { kana: "ぽ", romaji: "po", type: "hiragana" },
+            // { kana: "きゃ", romaji: "kya", type: "hiragana" }, { kana: "きゅ", romaji: "kyu", type: "hiragana" }, { kana: "きょ", romaji: "kyo", type: "hiragana" },
 
-        // Katakana
-        { kana: 'ア', romaji: 'a', type: 'katakana' },
-        { kana: 'イ', romaji: 'i', type: 'katakana' },
-        { kana: 'ウ', romaji: 'u', type: 'katakana' },
-        { kana: 'エ', romaji: 'e', type: 'katakana' },
-        { kana: 'オ', romaji: 'o', type: 'katakana' },
-        { kana: 'カ', romaji: 'ka', type: 'katakana' },
-        { kana: 'キ', romaji: 'ki', type: 'katakana' },
-        { kana: 'ク', romaji: 'ku', type: 'katakana' },
-        { kana: 'ケ', romaji: 'ke', type: 'katakana' },
-        { kana: 'コ', romaji: 'ko', type: 'katakana' },
-        { kana: 'サ', romaji: 'sa', type: 'katakana' },
-        { kana: 'シ', romaji: 'shi', type: 'katakana' },
-        { kana: 'ス', romaji: 'su', type: 'katakana' },
-        { kana: 'セ', romaji: 'se', type: 'katakana' },
-        { kana: 'ソ', romaji: 'so', type: 'katakana' },
-        { kana: 'タ', romaji: 'ta', type: 'katakana' },
-        { kana: 'チ', romaji: 'chi', type: 'katakana' },
-        { kana: 'ツ', romaji: 'tsu', type: 'katakana' },
-        { kana: 'テ', romaji: 'te', type: 'katakana' },
-        { kana: 'ト', romaji: 'to', type: 'katakana' },
-        { kana: 'ナ', romaji: 'na', type: 'katakana' },
-        { kana: 'ニ', romaji: 'ni', type: 'katakana' },
-        { kana: 'ヌ', romaji: 'nu', type: 'katakana' },
-        { kana: 'ネ', romaji: 'ne', type: 'katakana' },
-        { kana: 'ノ', romaji: 'no', type: 'katakana' },
-        { kana: 'ハ', romaji: 'ha', type: 'katakana' },
-        { kana: 'ヒ', romaji: 'hi', type: 'katakana' },
-        { kana: 'フ', romaji: 'fu', type: 'katakana' },
-        { kana: 'ヘ', romaji: 'he', type: 'katakana' },
-        { kana: 'ホ', romaji: 'ho', type: 'katakana' },
-        { kana: 'マ', romaji: 'ma', type: 'katakana' },
-        { kana: 'ミ', romaji: 'mi', type: 'katakana' },
-        { kana: 'ム', romaji: 'mu', type: 'katakana' },
-        { kana: 'メ', romaji: 'me', type: 'katakana' },
-        { kana: 'モ', romaji: 'mo', type: 'katakana' },
-        { kana: 'ヤ', romaji: 'ya', type: 'katakana' },
-        { kana: 'ユ', romaji: 'yu', type: 'katakana' },
-        { kana: 'ヨ', romaji: 'yo', type: 'katakana' },
-        { kana: 'ラ', romaji: 'ra', type: 'katakana' },
-        { kana: 'リ', romaji: 'ri', type: 'katakana' },
-        { kana: 'ル', romaji: 'ru', type: 'katakana' },
-        { kana: 'レ', romaji: 're', type: 'katakana' },
-        { kana: 'ロ', romaji: 'ro', type: 'katakana' },
-        { kana: 'ワ', romaji: 'wa', type: 'katakana' },
-        { kana: 'ヲ', romaji: 'wo', type: 'katakana' },
-        { kana: 'ン', romaji: 'n', type: 'katakana' },
-      ];
 
-      // DOM elements
-      const kanaDisplay = document.getElementById('kana-display');
-      const romajiInput = document.getElementById('romaji-input');
-      const checkButton = document.getElementById('check-button');
-      const showAnswerButton = document.getElementById('show-answer-button');
-      const answerDisplay = document.getElementById('answer-display');
-      const quizContainer = document.getElementById('quiz-container');
-      const messageBox = document.getElementById('message-box');
-      const body = document.body;
+            // Katakana
+            { kana: "ア", romaji: "a", type: "katakana" }, { kana: "イ", romaji: "i", type: "katakana" },
+            { kana: "ウ", romaji: "u", type: "katakana" }, { kana: "エ", romaji: "e", type: "katakana" },
+            { kana: "オ", romaji: "o", type: "katakana" },
+            { kana: "カ", romaji: "ka", type: "katakana" }, { kana: "キ", romaji: "ki", type: "katakana" },
+            { kana: "ク", romaji: "ku", type: "katakana" }, { kana: "ケ", romaji: "ke", type: "katakana" },
+            { kana: "コ", romaji: "ko", type: "katakana" },
+            { kana: "サ", romaji: "sa", type: "katakana" }, { kana: "シ", romaji: "shi", type: "katakana" },
+            { kana: "ス", romaji: "su", type: "katakana" }, { kana: "セ", romaji: "se", type: "katakana" },
+            { kana: "ソ", romaji: "so", type: "katakana" },
+            { kana: "タ", romaji: "ta", type: "katakana" }, { kana: "チ", romaji: "chi", type: "katakana" },
+            { kana: "ツ", romaji: "tsu", type: "katakana" }, { kana: "テ", romaji: "te", type: "katakana" },
+            { kana: "ト", romaji: "to", type: "katakana" },
+            { kana: "ナ", romaji: "na", type: "katakana" }, { kana: "ニ", romaji: "ni", type: "katakana" },
+            { kana: "ヌ", romaji: "nu", type: "katakana" }, { kana: "ネ", romaji: "ne", type: "katakana" },
+            { kana: "ノ", romaji: "no", type: "katakana" },
+            { kana: "ハ", romaji: "ha", type: "katakana" }, { kana: "ヒ", romaji: "hi", type: "katakana" },
+            { kana: "フ", romaji: "fu", type: "katakana" }, { kana: "ヘ", romaji: "he", type: "katakana" },
+            { kana: "ホ", romaji: "ho", type: "katakana" },
+            { kana: "マ", romaji: "ma", type: "katakana" }, { kana: "ミ", romaji: "mi", type: "katakana" },
+            { kana: "ム", romaji: "mu", type: "katakana" }, { kana: "メ", romaji: "me", type: "katakana" },
+            { kana: "モ", romaji: "mo", type: "katakana" },
+            { kana: "ヤ", romaji: "ya", type: "katakana" }, { kana: "ユ", romaji: "yu", type: "katakana" },
+            { kana: "ヨ", romaji: "yo", type: "katakana" },
+            { kana: "ラ", romaji: "ra", type: "katakana" }, { kana: "リ", romaji: "ri", type: "katakana" },
+            { kana: "ル", romaji: "ru", type: "katakana" }, { kana: "レ", romaji: "re", type: "katakana" },
+            { kana: "ロ", romaji: "ro", type: "katakana" },
+            { kana: "ワ", romaji: "wa", type: "katakana" }, { kana: "ヲ", romaji: "wo", type: "katakana" },
+            { kana: "ン", romaji: "n", type: "katakana" },
+        ];
 
-      // New DOM elements for chart functionality
-      const showHiraganaChartButton = document.getElementById(
-        'show-hiragana-chart-button'
-      );
-      const showKatakanaChartButton = document.getElementById(
-        'show-katakana-chart-button'
-      );
-      const chartModalOverlay = document.getElementById('chart-modal-overlay');
-      const chartModalContent = document.getElementById('chart-modal-content');
-      const closeChartModalButton = document.getElementById(
-        'close-chart-modal-button'
-      );
-      const chartTitle = document.getElementById('chart-title');
-      const chartGrid = document.getElementById('chart-grid');
+        // This data is specifically for the quiz (random selection)
+        // Ensure this list contains only individual characters suitable for quiz questions.
+        const quizKanaData = [
+            // Hiragana
+            { kana: "あ", romaji: "a", type: "hiragana" }, { kana: "い", romaji: "i", type: "hiragana" },
+            { kana: "う", romaji: "u", type: "hiragana" }, { kana: "え", romaji: "e", type: "hiragana" },
+            { kana: "お", romaji: "o", type: "hiragana" },
+            { kana: "か", romaji: "ka", type: "hiragana" }, { kana: "き", romaji: "ki", type: "hiragana" },
+            { kana: "く", romaji: "ku", type: "hiragana" }, { kana: "け", romaji: "ke", type: "hiragana" },
+            { kana: "こ", romaji: "ko", type: "hiragana" },
+            { kana: "さ", romaji: "sa", type: "hiragana" }, { kana: "し", romaji: "shi", type: "hiragana" },
+            { kana: "す", romaji: "su", type: "hiragana" }, { kana: "せ", romaji: "se", type: "hiragana" },
+            { kana: "そ", romaji: "so", type: "hiragana" },
+            { kana: "た", romaji: "ta", type: "hiragana" }, { kana: "ち", romaji: "chi", type: "hiragana" },
+            { kana: "つ", romaji: "tsu", type: "hiragana" }, { kana: "て", romaji: "te", type: "hiragana" },
+            { kana: "と", romaji: "to", type: "hiragana" },
+            { kana: "な", romaji: "na", type: "hiragana" }, { kana: "に", romaji: "ni", type: "hiragana" },
+            { kana: "ぬ", romaji: "nu", type: "hiragana" }, { kana: "ね", romaji: "ne", type: "hiragana" },
+            { kana: "の", romaji: "no", type: "hiragana" },
+            { kana: "ha", romaji: "ha", type: "hiragana" }, { kana: "hi", romaji: "hi", type: "hiragana" },
+            { kana: "hu", romaji: "hu", type: "hiragana" }, { kana: "he", romaji: "he", type: "hiragana" },
+            { kana: "ho", romaji: "ho", type: "hiragana" },
+            { kana: "ma", romaji: "ma", type: "hiragana" }, { kana: "mi", romaji: "mi", type: "hiragana" },
+            { kana: "mu", romaji: "mu", type: "hiragana" }, { kana: "me", romaji: "me", type: "hiragana" },
+            { kana: "mo", romaji: "mo", type: "hiragana" },
+            { kana: "ya", romaji: "ya", type: "hiragana" }, { kana: "yu", romaji: "yu", type: "hiragana" },
+            { kana: "yo", romaji: "yo", type: "hiragana" },
+            { kana: "ra", romaji: "ra", type: "hiragana" }, { kana: "ri", romaji: "ri", type: "hiragana" },
+            { kana: "ru", romaji: "ru", type: "hiragana" }, { kana: "re", romaji: "re", type: "hiragana" },
+            { kana: "ro", romaji: "ro", type: "hiragana" },
+            { kana: "wa", romaji: "wa", type: "hiragana" }, { kana: "wo", romaji: "wo", type: "hiragana" },
+            { kana: "n", romaji: "n", type: "hiragana" },
 
-      // Global variables to store current quiz state
-      let currentKanaSet = []; // Stores the 3 randomly selected kana objects
-      let correctStatus = [false, false, false]; // Tracks correctness for each of the 3 kana
+            // Katakana
+            { kana: "ア", romaji: "a", type: "katakana" }, { kana: "イ", romaji: "i", type: "katakana" },
+            { kana: "ウ", romaji: "u", type: "katakana" }, { kana: "エ", romaji: "e", type: "katakana" },
+            { kana: "オ", romaji: "o", type: "katakana" },
+            { kana: "カ", romaji: "ka", type: "katakana" }, { kana: "キ", romaji: "ki", type: "katakana" },
+            { kana: "ク", romaji: "ku", type: "katakana" }, { kana: "ケ", romaji: "ke", type: "katakana" },
+            { kana: "コ", romaji: "ko", type: "katakana" },
+            { kana: "サ", romaji: "sa", type: "katakana" }, { kana: "シ", romaji: "shi", type: "katakana" },
+            { kana: "ス", romaji: "su", type: "katakana" }, { kana: "セ", romaji: "se", type: "katakana" },
+            { kana: "ソ", romaji: "so", type: "katakana" },
+            { kana: "タ", romaji: "ta", type: "katakana" }, { kana: "チ", romaji: "chi", type: "katakana" },
+            { kana: "ツ", romaji: "tsu", type: "katakana" }, { kana: "テ", romaji: "te", type: "katakana" },
+            { kana: "ト", romaji: "to", type: "katakana" },
+            { kana: "ナ", romaji: "na", type: "katakana" }, { kana: "ニ", romaji: "ni", type: "katakana" },
+            { kana: "ヌ", romaji: "nu", type: "katakana" }, { kana: "ネ", romaji: "ne", type: "katakana" },
+            { kana: "ノ", romaji: "no", type: "katakana" },
+            { kana: "ハ", romaji: "ha", type: "katakana" }, { kana: "ヒ", romaji: "hi", type: "katakana" },
+            { kana: "フ", romaji: "fu", type: "katakana" }, { kana: "ヘ", romaji: "he", type: "katakana" },
+            { kana: "ホ", romaji: "ho", type: "katakana" },
+            { kana: "マ", romaji: "ma", type: "katakana" }, { kana: "ミ", romaji: "mi", type: "katakana" },
+            { kana: "ム", romaji: "mu", type: "katakana" }, { kana: "メ", romaji: "me", type: "katakana" },
+            { kana: "モ", romaji: "mo", type: "katakana" },
+            { kana: "ヤ", romaji: "ya", type: "katakana" }, { kana: "ユ", romaji: "yu", type: "katakana" },
+            { kana: "ヨ", romaji: "yo", type: "katakana" },
+            { kana: "ラ", romaji: "ra", type: "katakana" }, { kana: "リ", romaji: "ri", type: "katakana" },
+            { kana: "ル", romaji: "ru", type: "katakana" }, { kana: "レ", romaji: "re", type: "katakana" },
+            { kana: "ロ", romaji: "ro", type: "katakana" },
+            { kana: "ワ", romaji: "wa", type: "katakana" }, { kana: "ヲ", romaji: "wo", type: "katakana" },
+            { kana: "ン", romaji: "n", type: "katakana" },
+        ];
 
-      /**
-       * Displays a temporary message box for user feedback.
-       * @param {string} message - The message to display.
-       * @param {boolean} isError - True for error message (red), false for success (green).
-       */
-      function showMessageBox(message, isError = false) {
-        messageBox.textContent = message;
-        messageBox.classList.remove('error');
-        if (isError) {
-          messageBox.classList.add('error');
-        }
-        messageBox.classList.add('show');
-        setTimeout(() => {
-          messageBox.classList.remove('show');
-        }, 2000); // Message disappears after 2 seconds
-      }
 
-      /**
-       * Generates 3 random Hiragana or Katakana characters.
-       * Ensures at least one of each type if possible given the data.
-       */
-      function generateKanaSet() {
-        currentKanaSet = [];
-        correctStatus = [false, false, false]; // Reset correctness for new set
-        answerDisplay.textContent = ''; // Clear previously shown answers
+        // Structured data for chart display to follow Gojūon order with empty cells
+        const hiraganaChartLayout = [
+            [{ kana: "あ", romaji: "a" }, { kana: "い", romaji: "i" }, { kana: "う", romaji: "u" }, { kana: "え", romaji: "e" }, { kana: "お", romaji: "o" }],
+            [{ kana: "か", romaji: "ka" }, { kana: "き", romaji: "ki" }, { kana: "く", romaji: "ku" }, { kana: "け", romaji: "ke" }, { kana: "こ", romaji: "ko" }],
+            [{ kana: "さ", romaji: "sa" }, { kana: "し", romaji: "shi" }, { kana: "す", romaji: "su" }, { kana: "せ", romaji: "se" }, { kana: "そ", romaji: "so" }],
+            [{ kana: "た", romaji: "ta" }, { kana: "ち", romaji: "chi" }, { kana: "つ", romaji: "tsu" }, { kana: "て", romaji: "te" }, { kana: "と", romaji: "to" }],
+            [{ kana: "な", romaji: "na" }, { kana: "に", romaji: "ni" }, { kana: "ぬ", romaji: "nu" }, { kana: "ね", romaji: "ne" }, { kana: "の", romaji: "no" }],
+            [{ kana: "は", romaji: "ha" }, { kana: "ひ", romaji: "hi" }, { kana: "ふ", romaji: "fu" }, { kana: "へ", romaji: "he" }, { kana: "ほ", romaji: "ho" }],
+            [{ kana: "ま", romaji: "ma" }, { kana: "み", romaji: "mi" }, { kana: "む", romaji: "mu" }, { kana: "め", romaji: "me" }, { kana: "も", romaji: "mo" }],
+            [{ kana: "や", romaji: "ya" }, null, { kana: "ゆ", romaji: "yu" }, null, { kana: "よ", romaji: "yo" }], // 'i' and 'e' columns are empty
+            [{ kana: "ら", romaji: "ra" }, { kana: "り", romaji: "ri" }, { kana: "る", romaji: "ru" }, { kana: "れ", romaji: "re" }, { kana: "ろ", romaji: "ro" }],
+            [{ kana: "わ", romaji: "wa" }, null, null, null, { kana: "を", romaji: "wo" }], // 'i', 'u', 'e' columns are empty
+            [{ kana: "ん", romaji: "n" }, null, null, null, null] // 'n' stands alone
+            // Add dakuten/handakuten and combinations here if needed for full chart
+        ];
 
-        const hiragana = kanaData.filter((item) => item.type === 'hiragana');
-        const katakana = kanaData.filter((item) => item.type === 'katakana');
+        const katakanaChartLayout = [
+            [{ kana: "ア", romaji: "a" }, { kana: "イ", romaji: "i" }, { kana: "ウ", romaji: "u" }, { kana: "エ", romaji: "e" }, { kana: "オ", romaji: "o" }],
+            [{ kana: "カ", romaji: "ka" }, { kana: "キ", romaji: "ki" }, { kana: "ク", romaji: "ku" }, { kana: "ケ", romaji: "ke" }, { kana: "コ", romaji: "ko" }],
+            [{ kana: "サ", romaji: "sa" }, { kana: "シ", romaji: "shi", romaji: "shi" }, { kana: "ス", romaji: "su" }, { kana: "セ", romaji: "se" }, { kana: "ソ", romaji: "so" }],
+            [{ kana: "タ", romaji: "ta" }, { kana: "チ", romaji: "chi" }, { kana: "ツ", romaji: "tsu" }, { kana: "テ", romaji: "te" }, { kana: "ト", romaji: "to" }],
+            [{ kana: "ナ", romaji: "na" }, { kana: "ニ", romaji: "ni" }, { kana: "ヌ", romaji: "nu" }, { kana: "ネ", romaji: "ne" }, { kana: "ノ", romaji: "no" }],
+            [{ kana: "ハ", romaji: "ha" }, { kana: "ヒ", romaji: "hi" }, { kana: "フ", romaji: "fu" }, { kana: "ヘ", romaji: "he" }, { kana: "ホ", romaji: "ho" }],
+            [{ kana: "マ", romaji: "ma" }, { kana: "ミ", romaji: "mi" }, { kana: "ム", romaji: "mu" }, { kana: "メ", romaji: "me" }, { kana: "モ", romaji: "mo" }],
+            [{ kana: "ヤ", romaji: "ya" }, null, { kana: "ユ", romaji: "yu" }, null, { kana: "ヨ", romaji: "yo" }],
+            [{ kana: "ラ", romaji: "ra" }, { kana: "リ", romaji: "ri" }, { kana: "ル", romaji: "ru" }, { kana: "レ", romaji: "re" }, { kana: "ロ", romaji: "ro" }],
+            [{ kana: "ワ", romaji: "wa" }, null, null, null, { kana: "ヲ", romaji: "wo" }],
+            [{ kana: "ン", romaji: "n" }, null, null, null, null]
+        ];
 
-        // Try to ensure a mix, if not enough of both, just pick randomly
-        if (hiragana.length >= 1 && katakana.length >= 1) {
-          // Pick one hiragana, one katakana, and one random
-          currentKanaSet.push(
-            hiragana[Math.floor(Math.random() * hiragana.length)]
-          );
-          currentKanaSet.push(
-            katakana[Math.floor(Math.random() * katakana.length)]
-          );
-          currentKanaSet.push(
-            kanaData[Math.floor(Math.random() * kanaData.length)]
-          );
-          // Shuffle to randomize their order
-          currentKanaSet.sort(() => Math.random() - 0.5);
-        } else {
-          // If not enough of both types, just pick 3 random characters
-          for (let i = 0; i < 3; i++) {
-            currentKanaSet.push(
-              kanaData[Math.floor(Math.random() * kanaData.length)]
-            );
-          }
-        }
 
-        displayKana();
-      }
+        // DOM elements
+        const kanaDisplay = document.getElementById('kana-display');
+        const romajiInput = document.getElementById('romaji-input');
+        const checkButton = document.getElementById('check-button');
+        const showAnswerButton = document.getElementById('show-answer-button');
+        const answerDisplay = document.getElementById('answer-display');
+        const quizContainer = document.getElementById('quiz-container');
+        const messageBox = document.getElementById('message-box');
+        const body = document.body;
 
-      /**
-       * Displays the generated Kana characters on the page.
-       */
-      function displayKana() {
-        kanaDisplay.innerHTML = ''; // Clear previous characters
-        currentKanaSet.forEach((kanaObj, index) => {
-          const charDiv = document.createElement('div');
-          charDiv.id = `kana-${index}`;
-          charDiv.className = `kana-char text-6xl font-bold p-4 border-2 border-gray-300 rounded-lg transition-all duration-200 ${
-            correctStatus[index]
-              ? 'bg-green-100 border-green-500 text-green-700'
-              : 'bg-gray-50 text-gray-800'
-          }`;
-          charDiv.textContent = kanaObj.kana;
-          kanaDisplay.appendChild(charDiv);
-        });
-        romajiInput.value = ''; // Clear input field
-        romajiInput.focus(); // Focus input for quick entry
-      }
+        // New DOM elements for chart functionality
+        const showHiraganaChartButton = document.getElementById('show-hiragana-chart-button');
+        const showKatakanaChartButton = document.getElementById('show-katakana-chart-button');
+        const chartModalOverlay = document.getElementById('chart-modal-overlay');
+        const chartModalContent = document.getElementById('chart-modal-content');
+        const closeChartModalButton = document.getElementById('close-chart-modal-button');
+        const chartTitle = document.getElementById('chart-title');
+        const chartGrid = document.getElementById('chart-grid');
 
-      /**
-       * Handles the shake animation for the screen.
-       */
-      function shakeScreen() {
-        body.classList.add('shake-screen');
-        setTimeout(() => {
-          body.classList.remove('shake-screen');
-        }, 300); // Duration of the shake animation
-      }
+        // Global variables to store current quiz state
+        let currentKanaSet = []; // Stores the 3 randomly selected kana objects
+        let correctStatus = [false, false, false]; // Tracks correctness for each of the 3 kana
 
-      /**
-       * Checks the user's Romaji input against the current Kana set.
-       */
-      function checkAnswer() {
-        const inputRomaji = romajiInput.value.toLowerCase().trim();
-        const romajiParts = inputRomaji.split(' '); // Split input by space for multiple answers
-
-        let allCorrectInThisAttempt = true;
-        let anyIncorrectInThisAttempt = false;
-
-        currentKanaSet.forEach((kanaObj, index) => {
-          const charDiv = document.getElementById(`kana-${index}`);
-          charDiv.classList.remove(
-            'border-red-500',
-            'border-gray-300',
-            'border-green-500'
-          ); // Reset borders
-
-          // Only check if this character hasn't been answered correctly yet
-          if (!correctStatus[index]) {
-            if (romajiParts[index] && romajiParts[index] === kanaObj.romaji) {
-              correctStatus[index] = true;
-              charDiv.classList.add(
-                'bg-green-100',
-                'border-green-500',
-                'text-green-700'
-              );
-            } else {
-              allCorrectInThisAttempt = false;
-              anyIncorrectInThisAttempt = true;
-              charDiv.classList.add('border-red-500');
+        /**
+         * Displays a temporary message box for user feedback.
+         * @param {string} message - The message to display.
+         * @param {boolean} isError - True for error message (red), false for success (green).
+         */
+        function showMessageBox(message, isError = false) {
+            messageBox.textContent = message;
+            messageBox.classList.remove('error');
+            if (isError) {
+                messageBox.classList.add('error');
             }
-          } else {
-            // If already correct, ensure it stays green and doesn't affect `allCorrectInThisAttempt`
-            charDiv.classList.add(
-              'bg-green-100',
-              'border-green-500',
-              'text-green-700'
-            );
-          }
+            messageBox.classList.add('show');
+            setTimeout(() => {
+                messageBox.classList.remove('show');
+            }, 2000); // Message disappears after 2 seconds
+        }
+
+        /**
+         * Generates 3 random Hiragana or Katakana characters for the quiz.
+         * Ensures at least one of each type if possible given the data.
+         */
+        function generateKanaSet() {
+            currentKanaSet = [];
+            correctStatus = [false, false, false]; // Reset correctness for new set
+            answerDisplay.textContent = ''; // Clear previously shown answers
+
+            const hiragana = quizKanaData.filter(item => item.type === 'hiragana');
+            const katakana = quizKanaData.filter(item => item.type === 'katakana');
+
+            // Try to ensure a mix, if not enough of both, just pick randomly
+            if (hiragana.length >= 1 && katakana.length >= 1) {
+                // Pick one hiragana, one katakana, and one random from combined list
+                currentKanaSet.push(hiragana[Math.floor(Math.random() * hiragana.length)]);
+                currentKanaSet.push(katakana[Math.floor(Math.random() * katakana.length)]);
+                currentKanaSet.push(quizKanaData[Math.floor(Math.random() * quizKanaData.length)]);
+                // Shuffle to randomize their order
+                currentKanaSet.sort(() => Math.random() - 0.5);
+            } else {
+                // If not enough of both types, just pick 3 random characters from the quiz data
+                for (let i = 0; i < 3; i++) {
+                    currentKanaSet.push(quizKanaData[Math.floor(Math.random() * quizKanaData.length)]);
+                }
+            }
+
+            displayKana();
+        }
+
+        /**
+         * Displays the generated Kana characters on the page.
+         */
+        function displayKana() {
+            kanaDisplay.innerHTML = ''; // Clear previous characters
+            currentKanaSet.forEach((kanaObj, index) => {
+                const charDiv = document.createElement('div');
+                charDiv.id = `kana-${index}`;
+                charDiv.className = `kana-char text-6xl font-bold p-4 border-2 border-gray-300 rounded-lg transition-all duration-200 ${correctStatus[index] ? 'bg-green-100 border-green-500 text-green-700' : 'bg-gray-50 text-gray-800'}`;
+                charDiv.textContent = kanaObj.kana;
+                kanaDisplay.appendChild(charDiv);
+            });
+            romajiInput.value = ''; // Clear input field
+            romajiInput.focus(); // Focus input for quick entry
+        }
+
+        /**
+         * Handles the shake animation for the screen.
+         */
+        function shakeScreen() {
+            body.classList.add('shake-screen');
+            setTimeout(() => {
+                body.classList.remove('shake-screen');
+            }, 300); // Duration of the shake animation
+        }
+
+        /**
+         * Checks the user's Romaji input against the current Kana set.
+         */
+        function checkAnswer() {
+            const inputRomaji = romajiInput.value.toLowerCase().trim();
+            const romajiParts = inputRomaji.split(' ').filter(part => part !== ''); // Split input by space, filter empty
+
+            let allCorrectInThisAttempt = true;
+            let anyIncorrectInThisAttempt = false;
+
+            currentKanaSet.forEach((kanaObj, index) => {
+                const charDiv = document.getElementById(`kana-${index}`);
+                charDiv.classList.remove('border-red-500', 'border-gray-300', 'border-green-500'); // Reset borders
+
+                // Only check if this character hasn't been answered correctly yet
+                if (!correctStatus[index]) {
+                    // Check if there's an input part for this index and if it matches
+                    if (romajiParts[index] && romajiParts[index] === kanaObj.romaji) {
+                        correctStatus[index] = true;
+                        charDiv.classList.add('bg-green-100', 'border-green-500', 'text-green-700');
+                    } else {
+                        allCorrectInThisAttempt = false;
+                        anyIncorrectInThisAttempt = true;
+                        charDiv.classList.add('border-red-500');
+                    }
+                } else {
+                    // If already correct, ensure it stays green and doesn't affect `allCorrectInThisAttempt`
+                    charDiv.classList.add('bg-green-100', 'border-green-500', 'text-green-700');
+                }
+            });
+
+            if (anyIncorrectInThisAttempt) {
+                shakeScreen();
+                showMessageBox("Incorrect! Try again.", true);
+            } else if (correctStatus.every(status => status === true)) {
+                showMessageBox("All Correct! Generating new characters.", false);
+                setTimeout(generateKanaSet, 1000); // Generate new set after a short delay
+            } else if (!allCorrectInThisAttempt) {
+                // This condition handles cases where some were correct, but not all, and no new incorrect ones were made
+                // Or if the input was partially correct but not fully.
+                showMessageBox("Keep going! Some answers are still incorrect.", true);
+            }
+        }
+
+        /**
+         * Reveals the correct Romaji answers for the current set of Kana.
+         */
+        function showAnswers() {
+            const answers = currentKanaSet.map(kanaObj => kanaObj.romaji.toUpperCase()).join(' - ');
+            answerDisplay.textContent = `Answers: ${answers}`;
+            showMessageBox("Answers revealed!", false);
+        }
+
+        /**
+         * Opens the chart modal and populates it with the specified kana type based on structured layout.
+         * @param {string} type - 'hiragana' or 'katakana'
+         */
+        function openChartModal(type) {
+            chartGrid.innerHTML = ''; // Clear previous chart content
+            chartTitle.textContent = type === 'hiragana' ? 'Hiragana Chart' : 'Katakana Chart';
+
+            const chartToDisplay = type === 'hiragana' ? hiraganaChartLayout : katakanaChartLayout;
+
+            chartToDisplay.forEach(row => {
+                row.forEach(kanaObj => {
+                    const cell = document.createElement('div');
+                    if (kanaObj) {
+                        cell.className = 'chart-cell';
+                        cell.innerHTML = `
+                            <div class="chart-kana">${kanaObj.kana}</div>
+                            <div class="chart-romaji">${kanaObj.romaji}</div>
+                        `;
+                    } else {
+                        // For empty cells in the layout
+                        cell.className = 'chart-cell empty';
+                    }
+                    chartGrid.appendChild(cell);
+                });
+            });
+
+            chartModalOverlay.classList.add('show');
+        }
+
+        /**
+         * Closes the chart modal.
+         */
+        function closeChartModal() {
+            chartModalOverlay.classList.remove('show');
+        }
+
+        // Event Listeners
+        checkButton.addEventListener('click', checkAnswer);
+        showAnswerButton.addEventListener('click', showAnswers);
+        romajiInput.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+                checkAnswer();
+            }
         });
 
-        if (anyIncorrectInThisAttempt) {
-          shakeScreen();
-          showMessageBox('Incorrect! Try again.', true);
-        } else if (correctStatus.every((status) => status === true)) {
-          showMessageBox('All Correct! Generating new characters.', false);
-          setTimeout(generateKanaSet, 1000); // Generate new set after a short delay
-        } else if (!allCorrectInThisAttempt) {
-          showMessageBox('Keep going! Some answers are still incorrect.', true);
-        }
-      }
+        // Event listeners for chart buttons
+        showHiraganaChartButton.addEventListener('click', () => openChartModal('hiragana'));
+        showKatakanaChartButton.addEventListener('click', () => openChartModal('katakana'));
+        closeChartModalButton.addEventListener('click', closeChartModal);
 
-      /**
-       * Reveals the correct Romaji answers for the current set of Kana.
-       */
-      function showAnswers() {
-        const answers = currentKanaSet
-          .map((kanaObj) => kanaObj.romaji.toUpperCase())
-          .join(' - ');
-        answerDisplay.textContent = `Answers: ${answers}`;
-        showMessageBox('Answers revealed!', false);
-      }
-
-      /**
-       * Opens the chart modal and populates it with the specified kana type.
-       * @param {string} type - 'hiragana' or 'katakana'
-       */
-      function openChartModal(type) {
-        chartGrid.innerHTML = ''; // Clear previous chart content
-        chartTitle.textContent =
-          type === 'hiragana' ? 'Hiragana Chart' : 'Katakana Chart';
-
-        const filteredKana = kanaData.filter((item) => item.type === type);
-
-        filteredKana.forEach((kanaObj) => {
-          const cell = document.createElement('div');
-          cell.className = 'chart-cell';
-          cell.innerHTML = `
-                    <div class="chart-kana">${kanaObj.kana}</div>
-                    <div class="chart-romaji">${kanaObj.romaji}</div>
-                `;
-          chartGrid.appendChild(cell);
+        // Close modal when clicking outside the content
+        chartModalOverlay.addEventListener('click', (event) => {
+            if (event.target === chartModalOverlay) {
+                closeChartModal();
+            }
         });
 
-        chartModalOverlay.classList.add('show');
-      }
-
-      /**
-       * Closes the chart modal.
-       */
-      function closeChartModal() {
-        chartModalOverlay.classList.remove('show');
-      }
-
-      // Event Listeners
-      checkButton.addEventListener('click', checkAnswer);
-      showAnswerButton.addEventListener('click', showAnswers);
-      romajiInput.addEventListener('keypress', (event) => {
-        if (event.key === 'Enter') {
-          checkAnswer();
-        }
-      });
-
-      // New event listeners for chart buttons
-      showHiraganaChartButton.addEventListener('click', () =>
-        openChartModal('hiragana')
-      );
-      showKatakanaChartButton.addEventListener('click', () =>
-        openChartModal('katakana')
-      );
-      closeChartModalButton.addEventListener('click', closeChartModal);
-
-      // Close modal when clicking outside the content
-      chartModalOverlay.addEventListener('click', (event) => {
-        if (event.target === chartModalOverlay) {
-          closeChartModal();
-        }
-      });
-
-      // Initialize the quiz when the page loads
-      document.addEventListener('DOMContentLoaded', generateKanaSet);
+        // Initialize the quiz when the page loads
+        document.addEventListener('DOMContentLoaded', generateKanaSet);
     </script>
-  </body>
+</body>
 </html>
